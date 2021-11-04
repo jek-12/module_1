@@ -1,0 +1,6 @@
+users_feedback.main_page:
+  path: '/users_feedback/main'
+  defaults:
+    _controller: '\Drupal\users_feedback\Controller\HomePageController::form'
+  requirements:
+    _permission: 'access content'
