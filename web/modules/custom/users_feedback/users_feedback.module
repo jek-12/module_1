@@ -10,7 +10,7 @@ function users_feedback_theme($existing, $type, $theme, $path): array {
   return [
     'main' => [
       'variables' => [
-        'main-form' => ['asdf'=>'asdf'],
+        'main_form' => [],
       ],
     ],
   ];

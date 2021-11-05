@@ -14,10 +14,10 @@ class HomePageController extends ControllerBase {
   }
 
   public function form () {
-
+    $a = $this->formRender();
     return [
       '#theme' => 'main',
-      '#main-form' => $this->formRender(),
+      '#main_form' => $a,
     ];
   }
 
