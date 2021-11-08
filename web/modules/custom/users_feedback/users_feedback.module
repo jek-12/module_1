@@ -3,6 +3,9 @@
  * @file
  * Main file for custom hooks.
  */
+
+
+
 /**
  * Implements hook_theme().
  */
@@ -14,4 +17,10 @@ function users_feedback_theme($existing, $type, $theme, $path): array {
       ],
     ],
   ];
+}
+
+function users_feedback_BasicFeedbackForm_alter(\Drupal\Core\Form\FormStateInterface $form_state) {
+  $a = $form_state;
+  $b = $form_state;
+  return $a;
 }
