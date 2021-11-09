@@ -1,0 +1,69 @@
+<?php
+
+/**
+ * @file
+ * Create database tables and fields.
+ */
+
+/**
+ * Implements hook_install().
+ *
+ * Create table in database.
+ */
+function users_feedback_schema() {
+  $schema['users_feedback'] = [
+    'fields' => [
+      'id' => [
+        'type' => 'serial',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+      ],
+      'guest_name' => [
+        'type' => 'varchar',
+        'length' => 100,
+        'not null' => TRUE,
+        'default' => '',
+      ],
+      'guest_email' => [
+        'type' => 'varchar',
+        'length' => 200,
+        'not null' => TRUE,
+        'default' => '',
+      ],
+      'guest_number' => [
+        'type' => 'varchar',
+        'length' => 15,
+        'not null' => TRUE,
+        'default' => '',
+      ],
+      'feedback' => [
+        'type' => 'varchar',
+        'length' => 2000,
+        'not null' => TRUE,
+        'default' => '',
+      ],
+      'fid_avatar' => [
+        'type' => 'int',
+        'length' => 255,
+        'not null' => TRUE,
+        'default' => 0,
+      ],
+      'fid_picture' => [
+        'type' => 'int',
+        'length' => 255,
+        'not null' => TRUE,
+        'default' => 0,
+      ],
+      'created_time' => [
+        'type' => 'int',
+        'length' => 30,
+        'not null' => TRUE,
+        'default' => 1,
+      ],
+    ],
+    'primary key' => [
+      'id',
+    ],
+  ];
+  return $schema;
+}

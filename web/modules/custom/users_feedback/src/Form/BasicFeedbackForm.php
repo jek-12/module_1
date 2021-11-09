@@ -3,7 +3,6 @@
 namespace Drupal\users_feedback\Form;
 
 use Drupal\Core\Ajax\AjaxResponse;
-use Drupal\Core\Ajax\HtmlCommand;
 use Drupal\Core\Ajax\MessageCommand;
 use Drupal\Core\Form\FormBase;
 use Drupal\Core\Form\FormStateInterface;
@@ -11,35 +10,53 @@ use Drupal\file\Entity\File;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
 /**
- * This class created main form with.
+ * Class creat main form with validating of each existing fields.
  */
 class BasicFeedbackForm extends FormBase {
 
-  private $valid = FALSE;
-  private $once = TRUE;
-  private object $database;
+  /**
+   * Determines the validation state.
+   *
+   * @var bool
+   */
+  private bool $valid = FALSE;
+  /**
+   * Database connection object.
+   *
+   * @var \Drupal\Core\Database\Connection|object|null
+   */
+  protected object $database;
 
   /**
+   * Injecting external services into objects(database).
+   *
    * {@inheritdoc}
    */
   public static function create(ContainerInterface $container): BasicFeedbackForm {
     $services = parent::create($container);
-    $services->messenger = $container->get('messenger');
     $services->database = $container->get('database');
     return $services;
   }
 
   /**
+   * The unique string identifying the desired form.
+   *
    * {@inheritDoc}
    */
-  public function getFormId() {
+  public function getFormId(): string {
     return 'BasicFeedbackForm';
   }
 
   /**
+   * Builds and processes a form for a given form ID.
+   *
    * {@inheritDoc}
    */
-  public function buildForm(array $form, FormStateInterface $form_state) {
+  public function buildForm(array $form, FormStateInterface $form_state): array {
+    $form['system_messages'] = [
+      '#markup' => '<div id = "system-messages"></div>',
+      '#weight' => -1000,
+    ];
     $form['#suffix'] = '<div id = "form-wrap">';
     $form['#prefix'] = '</div>';
     $form['guest_name'] = [
@@ -78,6 +95,7 @@ class BasicFeedbackForm extends FormBase {
       '#prefix' => '<div id = "guest_number-message"></div>',
       '#description' => $this->t('Only numbers. +380681234567'),
       '#placeholder' => $this->t('+380681234567'),
+      '#maxlength' => 13,
       '#required' => TRUE,
       '#ajax' => [
         'callback' => '::validateAjax',
@@ -105,26 +123,6 @@ class BasicFeedbackForm extends FormBase {
         'progress' => FALSE,
       ],
     ];
-//    '#theme' => 'image_style',
-//      '#style_name' => 'wide',
-//      '#uri' => File::load($cat->fid)->getFileUri(),
-//    $image = $form_state->getValue('fid_avatar')[0];
-//    $file = File::load($image);
-//    $file->setPermanent();
-//    $file->save();
-//    $domain = $_SERVER['SERVER_NAME'];
-//    $image_ava = '/modules/custom/users_feedback/file/index.jpeg';
-//    $url_ava = "//{$domain}{$image_ava}";
-//    $a = $entity->get($form['fid_avatar']);
-
-//    $file = File::load(1);
-//    $file->setPermanent();
-//    $file->save();
-//    $uri = _get_file_field_uri($form, 'fid_avatar');
-//    $absolute_url = file_create_url($uri);
-    $file = File::load(12);
-    $file->setPermanent();
-    $file->save();
     $form['fid_avatar'] = [
       '#type' => 'managed_file',
       '#title' => $this->t('Please, choose profile picture'),
@@ -141,14 +139,10 @@ class BasicFeedbackForm extends FormBase {
         'progress' => FALSE,
       ],
     ];
-    $form['fid_def'] = [
+    $form['avatar_default'] = [
       '#theme' => 'image_style',
-      '#style_name' => 'wide',
+      '#style_name' => 'thumbnail',
       '#uri' => File::load(12)->getFileUri(),
-      '#attributes' => [
-        'class' => 'img-about',
-        'alt' => 'cat',
-      ],
     ];
     $form['fid_picture'] = [
       '#type' => 'managed_file',
@@ -180,132 +174,151 @@ class BasicFeedbackForm extends FormBase {
     return $form;
   }
 
-  //
-  //  public function setWarnForField(FormStateInterface $form_state, string $field) {
-  //    $fieldValue = $form_state->getValue($field);
-  //    $form_state->setErrorByName($field, t('Please enter correct @fieldName, because @fieldValue is incorrect!', [
-  //      '@fieldValue' => $fieldValue,
-  //      '@fieldName' => $field,
-  //    ]));
-  //    return $fieldValue;
-  //  }
-  //  /**
-  //   * {@inheritdoc}
-  //   */
-  //  public function validateGuestEmail(array &$form, FormStateInterface $form_state) {
-  //    $response = new AjaxResponse();
-  //
-  //    $reg = preg_match('/^([a-z0-9_-]+\.)*[a-z0-9_-]+@[a-z0-9_-]+(\.[a-z0-9_-]+)*\.[a-z]{2,6}$/', $form_state->getValue('guest_email'));
-  //
-  //    if (true) {
-  //      $response->addCommand(new HtmlCommand('.email-validation-message', strval($this->setWarnForField($form_state, 'guest_email'))));
-  //    }
-  //    else {
-  //      # Убираем ошибку если она была и пользователь изменил почтовый адрес.
-  //      $response->addCommand(new HtmlCommand('.email-validation-message', ''));
-  //    }
-  //    return $response;.
-
   /**
-   * }.
+   * Ajax callback for validate each form field.
    */
-  public function validateAjax($form, FormStateInterface $form_state) {
+  public function validateAjax($form, FormStateInterface $form_state): AjaxResponse {
+    // Name of field which is validating now (keyup). Data get from form_state.
     $fieldName = $this->getTrigElement($form_state);
+    // Value of field which is validating now (keyup). Data get from form_state.
     $fieldValue = $this->getTrigValue($form_state);
-    $st = $form_state->getValue('fid_avatar')[0];
-    $wrapperQuerySelec = strval('#' . $fieldName . '-message');
+    // Wrapper where help message will be outputted.
+    $wrapperQuerySelec = ('#' . $fieldName . '-message');
+    $response = new AjaxResponse();
     if (empty($fieldValue)) {
-      $response = new AjaxResponse();
-      $response->addCommand(new MessageCommand( t('@fieldName is empty. Please, enter the correct data', [
+      $response->addCommand(new MessageCommand(t('@fieldName is empty. Please, enter the correct data', [
         '@fieldName' => $fieldName,
       ]), $wrapperQuerySelec, ['type' => 'warning'], TRUE));
-      return $response;
     }
     elseif ($this->valid) {
-      $response = new AjaxResponse();
-      $response->addCommand(new MessageCommand( t('Correctly entered data: @fieldValue, for the @fieldName field.', [
+      $response->addCommand(new MessageCommand(t('Correctly entered data: @fieldValue, for the @fieldName field.', [
         '@fieldName' => $fieldName,
         '@fieldValue' => $fieldValue,
       ]), $wrapperQuerySelec, ['type' => 'status'], TRUE));
-      return $response;
     }
     else {
-      $response = new AjaxResponse();
       $response->addCommand(new MessageCommand(t('Incorrectly entered data: @fieldValue, for the @fieldName field.', [
         '@fieldName' => $fieldName,
         '@fieldValue' => $fieldValue,
-        ]),
+      ]),
         $wrapperQuerySelec, ['type' => 'error'], TRUE));
-      return $response;
     }
+    return $response;
   }
 
-public function getTrigElement(FormStateInterface $form_state) {
-  $triggeringElement = $form_state->getTriggeringElement()["#name"];
-  return $triggeringElement;
-}
-public function getTrigValue(FormStateInterface $form_state) {
-    $value = $form_state->getValue($this->getTrigElement($form_state));
-    return $value;
-}
   /**
-   *
+   * Get element name from form_state when validateForm is processed.
    */
-  public function validateFields(FormStateInterface $form_state, $element, $regex) {
-    $fieldName = strval($element);
-    $fieldReg = strval($regex);
-    if($this->getTrigElement($form_state) === $fieldName) {
+  public function getTrigElement(FormStateInterface $form_state) {
+    return $form_state->getTriggeringElement()["#name"];
+  }
+
+  /**
+   * Get element name from form_state when validateForm is processed.
+   */
+  public function getTrigValue(FormStateInterface $form_state) {
+    return $form_state->getValue($this->getTrigElement($form_state));
+  }
+
+  /**
+   * Custom validate method which call in validateForm.
+   *
+   * @param \Drupal\Core\Form\FormStateInterface $form_state
+   *   Stores information about the state of a form.
+   * @param string $element
+   *   Name of field which will be validate by current regex.
+   * @param string $regex
+   *   Regex which will be test current $element.
+   */
+  public function validateFields(FormStateInterface $form_state, string $element, string $regex): void {
+    $fieldName = $element;
+    $fieldReg = $regex;
+    if ($this->getTrigElement($form_state) === $fieldName) {
       $reg = preg_match($fieldReg, $this->getTrigValue($form_state));
-      if($reg) {
+      if ($reg) {
         $this->valid = TRUE;
-      } else {
+      }
+      else {
         $form_state->setErrorByName($this->getTrigElement($form_state));
         $this->valid = FALSE;
       }
     }
   }
-  /**
-   *\+?([0-9]{2})-?([0-9]{3})-?([0-9]{6,7})
-   */
-//  public function validateName(FormStateInterface $form_state, $field) {
-//    $fieldName = strval($field);
-//    $fieldValue = $form_state->getValue($fieldName);
-//    $reg = preg_match('/^([a-z0-9_-]+\.)*[a-z0-9_-]+@[a-z0-9_-]+(\.[a-z0-9_-]+)*\.[a-z]{2,7}$/', $fieldValue);
-//    if ($reg) {
-//      $this->valid = TRUE;
-//    }
-//    else {
-//      $form_state->setErrorByName($fieldName, $this->t('hala'));
-//      $this->valid = FALSE;
-//    }
-//  }
+
   /**
    * {@inheritDoc}
    */
-  public function validateForm(&$form, FormStateInterface $form_state) {
+  public function validateForm(&$form, FormStateInterface $form_state): void {
     $this->validateFields($form_state, 'guest_name', '/^[a-zA-Z]{2,100}$/');
     $this->validateFields($form_state, 'guest_email', '/^([a-z0-9_-]+\.)*[a-z0-9_-]+@[a-z0-9_-]+(\.[a-z0-9_-]+)*\.[a-z]{2,7}$/');
     $this->validateFields($form_state, 'guest_number', '/^\+?3?8?(0\d{9})$/');
   }
 
   /**
-   * {@inheritDoc}
+   *
    */
-  // запхнути на сабміті дефолтне значення картинки якщо філд не заповнений!
-  public function submitForm(&$form, FormStateInterface $form_state) {
-    $forma = [
-      '#type' => 'managed_file',
-      '#title' => $this->t('Please, choose profile picture'),
-      '#default_value' => [12],
-      '#upload_location' => 'public://images/avatar/',
-      '#upload_validators' => [
-        'file_validate_extension' => ['jpeg jpg png'],
-        'file_validate_size' => ['2097152'],
-      ],
-    ];
-    if(empty($form_state->getValue('fid_avatar'))) {
-      $c = $form_state->setValueForElement($form['fid_avatar'], $forma);
+  public function saveFile(FormStateInterface $form_state, $image) {
+    $img = $this->existAvatar($form_state, $image);
+    $file = File::load($img);
+    $file->setPermanent();
+    $file->save();
+    return (int) $img;
+  }
+
+  /**
+   *
+   */
+  public function getValue(FormStateInterface $form_state, string $value) {
+    return $form_state->getValue($value);
+  }
+
+  /**
+   *
+   */
+  public function existAvatar(FormStateInterface $form_state, $image) {
+    if (!empty($form_state->getValue($image)[0])) {
+      $c = 4;
+      return $form_state->getValue($image)[0];
     }
   }
 
+  public function pushData(array $form, FormStateInterface $form_state) {
+    $requestTime = \Drupal::time()->getRequestTime();
+    $data = [
+      'guest_name' => $this->getValue($form_state, 'guest_name'),
+      'guest_email' => $this->getValue($form_state, 'guest_email'),
+      'guest_number' => $this->getValue($form_state, 'guest_number'),
+      'feedback' => $this->getValue($form_state, 'feedback'),
+      'fid_avatar' => $this->saveFile($form_state, 'fid_avatar'),
+      'fid_picture' => $this->saveFile($form_state, 'fid_picture'),
+      'created_time' => $requestTime,
+    ];
+    $this->database->insert('users_feedback')->fields($data)->execute();
+  }
+  /**
+   * {@inheritdoc}
+   */
+
+  /**
+   * запхнути на сабміті дефолтне значення картинки якщо філд не заповнений!
+   */
+  public function submitForm(&$form, FormStateInterface $form_state) {
+    $this->pushData($form, $form_state);
+
+
+  }
+
+  // If (empty($form_state->getValue('fid_avatar'))) {
+  // $default_avatar = [                      ->format("Y-m-d H:i:s");
+  // '#type' => 'managed_file',
+  // '#title' => $this->t('Please, choose profile picture'),
+  // '#default_value' => [12],
+  // '#upload_location' => 'public://images/avatar/',
+  // '#upload_validators' => [
+  // 'file_validate_extension' => ['jpeg jpg png'],
+  // 'file_validate_size' => ['2097152'],
+  // ],
+  // ];
+  // $c = $form_state->setValueForElement($form['fid_avatar'], $default_avatar);
+  // }.
 }
