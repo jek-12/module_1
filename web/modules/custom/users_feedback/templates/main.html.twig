@@ -1,8 +1,22 @@
 {{ main_form }}
-{{ name }}
-{{ email }}
-{{ number }}
-{{ feedback }}
-{{ avatar }}
-{{ picture }}
-{{ submit }}
+<div class = 'all_cards'>
+  {% for card in cards %}
+  <div class = 'card'>
+    <div class = "top">
+      <div class = 'first_group'>
+        <div class = 'avatar'>{{ card.fid_avatar }}</div>
+        <div>{{ card.guest_name }}</div>
+        <div>{{ card.created_time | date("d/m/Y G:i:s") }}</div>
+      </div>
+      <div class = 'third_group'>
+        <div>{{ card.guest_email}}</div>
+        <div>{{ card.guest_number }}</div>
+      </div>
+    </div>
+    <div class = 'second_group'>
+        {{ card.fid_picture }}
+        <div class = "feedback">{{ card.feedback }}</div>
+    </div>
+  </div>
+  {% endfor %}
+</div>

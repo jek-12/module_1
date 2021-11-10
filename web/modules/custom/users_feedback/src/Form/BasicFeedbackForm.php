@@ -59,6 +59,22 @@ class BasicFeedbackForm extends FormBase {
     ];
     $form['#suffix'] = '<div id = "form-wrap">';
     $form['#prefix'] = '</div>';
+    $form['fid_avatar'] = [
+      '#type' => 'managed_file',
+      '#title' => $this->t('Please, choose profile picture'),
+      '#upload_location' => 'public://images/avatar/',
+      '#upload_validators' => [
+        'file_validate_extension' => ['jpeg jpg png'],
+        'file_validate_size' => ['2097152'],
+      ],
+      '#ajax' => [
+        'callback' => '',
+        'event' => '',
+        'wrapper' => 'avatar-wrapper',
+        'disable-refocus' => TRUE,
+        'progress' => FALSE,
+      ],
+    ];
     $form['guest_name'] = [
       '#type' => 'textfield',
       '#prefix' => '<div id = "guest_name-message"></div>',
@@ -123,27 +139,6 @@ class BasicFeedbackForm extends FormBase {
         'progress' => FALSE,
       ],
     ];
-    $form['fid_avatar'] = [
-      '#type' => 'managed_file',
-      '#title' => $this->t('Please, choose profile picture'),
-      '#upload_location' => 'public://images/avatar/',
-      '#upload_validators' => [
-        'file_validate_extension' => ['jpeg jpg png'],
-        'file_validate_size' => ['2097152'],
-      ],
-      '#ajax' => [
-        'callback' => '',
-        'event' => '',
-        'wrapper' => 'avatar-wrapper',
-        'disable-refocus' => TRUE,
-        'progress' => FALSE,
-      ],
-    ];
-    $form['avatar_default'] = [
-      '#theme' => 'image_style',
-      '#style_name' => 'thumbnail',
-      '#uri' => File::load(12)->getFileUri(),
-    ];
     $form['fid_picture'] = [
       '#type' => 'managed_file',
       '#title' => $this->t('Please, choose picture'),
@@ -160,6 +155,7 @@ class BasicFeedbackForm extends FormBase {
         'progress' => FALSE,
       ],
     ];
+
     $form['submit'] = [
       '#type' => 'submit',
       '#value' => $this->t('Add feedback'),
@@ -277,8 +273,10 @@ class BasicFeedbackForm extends FormBase {
    */
   public function existAvatar(FormStateInterface $form_state, $image) {
     if (!empty($form_state->getValue($image)[0])) {
-      $c = 4;
       return $form_state->getValue($image)[0];
+    }
+    else {
+      return "12";
     }
   }
 
@@ -304,8 +302,6 @@ class BasicFeedbackForm extends FormBase {
    */
   public function submitForm(&$form, FormStateInterface $form_state) {
     $this->pushData($form, $form_state);
-
-
   }
 
   // If (empty($form_state->getValue('fid_avatar'))) {

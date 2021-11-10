@@ -5,6 +5,7 @@
  */
 
 use Drupal\Core\Form\FormStateInterface;
+use Drupal\file\Entity\File;
 
 
 /**
@@ -15,15 +16,42 @@ function users_feedback_theme($existing, $type, $theme, $path): array {
     'main' => [
       'variables' => [
         'main_form' => [],
+        'cards' => [],
       ],
-    ],
-    'custom_form' => [
-      'render element' => 'form',
-      'template' => 'custom-form',
     ],
   ];
 }
-
+function form_theme($existing, $type, $theme, $path): array {
+  return [
+    'custom_form' => [
+      'render element' => 'main_form',
+      'template' => 'custom_form',
+    ],
+  ];
+}
+function users_feedback_form_alter(&$form, FormStateInterface $form_state, $form_id) {
+  if($form_id === 'BasicFeedbackForm') {
+//    $form['avatar_default'] = [
+//      '#theme' => 'image_style',
+//      '#style_name' => 'thumbnail',
+//      '#uri' => File::load(12)->getFileUri(),
+//    ];
+//    $form['avatar_default']['#weight'] = 3;
+//    if($form['fid_avatar']) {
+//      $form['fid_avatar'] = [
+//        '#theme' => 'image_style',
+//        '#style_name' => 'thumbnail',
+//        '#uri' => File::load(12)->getFileUri(),
+//      ];
+//    }
+//    return [
+//      'custom_form' => [
+//        'render element' => $form ,
+//        'template' => 'custom_form',
+//      ],
+//    ];
+  }
+}
 ///**
 // * Implements hook_form_BASE_FORM_ID_alter().
 // */
@@ -46,6 +74,6 @@ function users_feedback_theme_suggestions_alter(array &$suggestions, array $vari
   return $suggestions;
 
 }
-function users_feedback_form_BasicFeedbackForm_alter(&$form, FormStateInterface &$form_state) {
-$form['#theme'] = ['custom_form'];
-}
+//function users_feedback_form_BasicFeedbackForm_alter(&$form, FormStateInterface &$form_state) {
+//$form['#theme'] = ['custom_form'];
+//}
