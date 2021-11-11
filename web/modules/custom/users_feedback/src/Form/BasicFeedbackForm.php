@@ -5,6 +5,7 @@ namespace Drupal\users_feedback\Form;
 use Drupal\Core\Ajax\AjaxResponse;
 use Drupal\Core\Ajax\MessageCommand;
 use Drupal\Core\Ajax\RedirectCommand;
+use Drupal\Core\Database\Connection;
 use Drupal\Core\Form\FormBase;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\Url;
@@ -21,14 +22,21 @@ class BasicFeedbackForm extends FormBase {
    *
    * @var bool
    */
-  private bool $valid = FALSE;
+  private bool $status;
+  /**
+   * Determines quantity of valid field.
+   *
+   * @var int
+   */
+  private int $valid = 0;
   /**
    * Database connection object.
    *
-   * @var \Drupal\Core\Database\Connection|object|null
+   * @var Connection|object|null
    */
-  protected object $database;
+  public object $database;
 
+  public array $val = ['guest_name'=>FALSE, 'guest_email' => FALSE, 'guest_number' => FALSE];
   /**
    * Injecting external services into objects(database).
    *
@@ -148,7 +156,7 @@ class BasicFeedbackForm extends FormBase {
 //        'class' => ['asdasd', 'asdasdsasdasd'],
 //      ],
 //    ];
-    $form['picture_wraper']['fid_picture'] = [
+    $form['fid_picture'] = [
       '#type' => 'managed_file',
       '#title' => $this->t('Please, choose picture'),
       '#upload_location' => 'public://images/picture/',
@@ -164,7 +172,6 @@ class BasicFeedbackForm extends FormBase {
         'progress' => FALSE,
       ],
     ];
-
     $form['submit'] = [
       '#type' => 'submit',
       '#value' => $this->t('Add feedback'),
@@ -201,7 +208,7 @@ class BasicFeedbackForm extends FormBase {
         '@fieldName' => $fieldName,
       ]), $wrapperQuerySelec, ['type' => 'warning'], TRUE));
     }
-    elseif ($this->valid) {
+    elseif ($this->status) {
       $response->addCommand(new MessageCommand(t('Correctly entered data: @fieldValue, for the @fieldName field.', [
         '@fieldName' => $fieldName,
         '@fieldValue' => $fieldValue,
@@ -232,26 +239,45 @@ class BasicFeedbackForm extends FormBase {
   }
 
   /**
+   * Unset warning for selected field name.
+   *
+   * @param \Drupal\Core\Form\FormStateInterface $form_state
+   *   this is FormStateInterface.
+   * @param string $field
+   *   - The machine name of the field for which the error is unset.
+   */
+  protected function unsetWarnForField(FormStateInterface $form_state, string $field): void {
+    $form_errors = $form_state->getErrors();
+    $form_state->clearErrors();
+    unset($form_errors[$field]);
+    foreach ($form_errors as $name => $error_message) {
+      $form_state->setErrorByName($name, $error_message);
+    }
+  }
+
+  /**
    * Custom validate method which call in validateForm.
    *
    * @param \Drupal\Core\Form\FormStateInterface $form_state
    *   Stores information about the state of a form.
-   * @param string $element
+   * @param string $bla
    *   Name of field which will be validate by current regex.
    * @param string $regex
    *   Regex which will be test current $element.
    */
-  public function validateFields(FormStateInterface $form_state, string $element, string $regex): void {
-    $fieldName = $element;
+  public function validateFields(FormStateInterface $form_state, string $bla, string $regex): void {
+    $fieldName = $bla;
     $fieldReg = $regex;
     if ($this->getTrigElement($form_state) === $fieldName) {
       $reg = preg_match($fieldReg, $this->getTrigValue($form_state));
       if ($reg) {
-        $this->valid = TRUE;
+        $this->val[$fieldName] = TRUE;
+        $this->status = TRUE;
       }
       else {
-        $form_state->setErrorByName($this->getTrigElement($form_state));
-        $this->valid = FALSE;
+//        $form_state->setErrorByName($fieldName, 'q');
+        $this->val[$fieldName] = FALSE;
+        $this->status = FALSE;
       }
     }
   }
@@ -273,7 +299,7 @@ class BasicFeedbackForm extends FormBase {
     $file = File::load($img);
     $file->setPermanent();
     $file->save();
-    return (int) $img;
+    return $img;
   }
 
   /**
@@ -291,10 +317,18 @@ class BasicFeedbackForm extends FormBase {
       return $form_state->getValue($image)[0];
     }
     else {
-      return "12";
+      return '12';
     }
   }
 
+  public function existPicture(FormStateInterface $form_state, $fid) {
+    if (!empty($form_state->getValue($fid)[0])) {
+      return $form_state->getValue($fid)[0];
+    }
+    else {
+      return NULL;
+    }
+  }
   public function pushData(array $form, FormStateInterface $form_state) {
     $requestTime = \Drupal::time()->getRequestTime();
     $data = [
@@ -302,13 +336,11 @@ class BasicFeedbackForm extends FormBase {
       'guest_email' => $this->getValue($form_state, 'guest_email'),
       'guest_number' => $this->getValue($form_state, 'guest_number'),
       'feedback' => $this->getValue($form_state, 'feedback'),
-      'fid_avatar' => $this->saveFile($form_state, 'fid_avatar'),
+      'fid_avatar' => $this->getValue($form_state, 'fid_avatar'),
       'fid_picture' => $this->saveFile($form_state, 'fid_picture'),
       'created_time' => $requestTime,
     ];
-    if($form_state->hasAnyErrors()){
-      $this->database->insert('users_feedback')->fields($data)->execute();
-    }
+    $this->database->insert('users_feedback')->fields($data)->execute();
 
   }
   /**
@@ -319,7 +351,17 @@ class BasicFeedbackForm extends FormBase {
    * запхнути на сабміті дефолтне значення картинки якщо філд не заповнений!
    */
   public function submitForm(&$form, FormStateInterface $form_state) {
-      $this->pushData($form, $form_state);
+    $this->pushData($form, $form_state);
+   $quantity = count($this->val);
+   foreach ($this->val as $value) {
+     if($value === TRUE) {
+       $this->valid += 1;
+     }
+   }
+   if($this->valid === $quantity) {
+
+   }
+
   }
 
   // If (empty($form_state->getValue('fid_avatar'))) {

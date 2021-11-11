@@ -2,12 +2,9 @@
 
 namespace Drupal\users_feedback\Form;
 
-use Drupal\Core\Ajax\AjaxResponse;
-use Drupal\Core\Ajax\CloseModalDialogCommand;
-use Drupal\Core\Ajax\RedirectCommand;
 use Drupal\Core\Form\FormStateInterface;
-use Drupal\Core\Url;
 use Drupal\file\Entity\File;
+use Symfony\Component\DependencyInjection\ContainerInterface;
 
 /**
  * Custom form Edit.
@@ -26,7 +23,7 @@ class Edit extends BasicFeedbackForm {
    *
    * @var object
    */
-  protected object $card;
+  protected object $obj;
 
   /**
    * {@inheritDoc}
@@ -37,12 +34,12 @@ class Edit extends BasicFeedbackForm {
       ->condition('id', $id)
       ->execute();
     $card = $result->fetch();
-    $this->card = $card;
+    $this->obj = $card;
     $form = parent::buildForm($form, $form_state);
-    $form['fid_avatar']['#default_value'] = $card->fid_avatar;
+    $form['fid_avatar']['#default_value'] = [$card->fid_avatar];
     $form['guest_name']['#default_value'] = $card->guest_name;
     $form['created_time']['#default_value'] = $card->created_time;
-    $form['fid_picture']['#default_value'] = $card->fid_picture;
+    $form['fid_picture']['#default_value'] = [$card->fid_picture];
     $form['feedback']['#default_value'] = $card->feedback;
     $form['guest_email']['#default_value'] = $card->guest_email;
     $form['guest_number']['#default_value'] = $card->guest_number;
@@ -55,9 +52,9 @@ class Edit extends BasicFeedbackForm {
    *
    * @throws \Drupal\Core\Entity\EntityStorageException
    */
-  public function submitForm(&$form, FormStateInterface $form_state): void {
+  public function submitForm(&$form, FormStateInterface $form_state) {
     $updated = [
-      'fid_avatar' => $this->card->fid_avatar,
+      'fid_avatar' => $form_state->getValue('fid_avatar')[0],
       'guest_name' => $form_state->getValue('guest_name'),
       'guest_email' => $form_state->getValue('guest_email'),
       'guest_number' => $form_state->getValue('guest_number'),
@@ -67,26 +64,25 @@ class Edit extends BasicFeedbackForm {
     $file = File::load($form_state->getValue('fid_avatar')[0]);
     $file->setPermanent();
     $file->save();
-    $ava = File::load($form_state->getValue('fid_avatar')[0]);
+    $ava = File::load($form_state->getValue('fid_picture')[0]);
     $ava->setPermanent();
     $ava->save();
     $this->database
       ->update('users_feedback')
-      ->condition('id', $this->card->id)
+      ->condition('id', $this->obj->id)
       ->fields($updated)
       ->execute();
   }
 
-  /**
-   * Redirect and update data.
-   */
-  public function rel(): AjaxResponse {
-    $response = new AjaxResponse();
-    $url = Url::fromRoute('users_feedback.main_page');
-    $command = new RedirectCommand($url->toString());
-    $response->addCommand($command);
-    $response->addCommand(new CloseModalDialogCommand());
-    return $response;
-  }
-
+//  /**
+//   * Redirect and update data.
+//   */
+  // Public function rel(): AjaxResponse {
+  //    $response = new AjaxResponse();
+  //    $url = Url::fromRoute('users_feedback.main_page');
+  //    $command = new RedirectCommand($url->toString());
+  //    $response->addCommand($command);
+  //    $response->addCommand(new CloseModalDialogCommand());
+  //    return $response;
+  //  }.
 }
