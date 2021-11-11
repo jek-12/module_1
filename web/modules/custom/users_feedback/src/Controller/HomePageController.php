@@ -2,6 +2,8 @@
 
 namespace Drupal\users_feedback\Controller;
 
+use Drupal\Core\Ajax\AjaxResponse;
+use Drupal\Core\Ajax\OpenModalDialogCommand;
 use Drupal\Core\Controller\ControllerBase;
 use Drupal\file\Entity\File;
 use Drupal\users_feedback\Form\BasicFeedbackForm;
@@ -56,6 +58,7 @@ class HomePageController extends ControllerBase {
         '#uri' => File::load($data->fid_avatar)->getFileUri(),
       ];
       $cards[] = [
+        'id' => $data->id,
         'guest_name' => $data->guest_name,
         'guest_email' => $data->guest_email,
         'guest_number' => $data->guest_number,
@@ -67,7 +70,44 @@ class HomePageController extends ControllerBase {
     }
     return $cards;
   }
-
+  public function showCurrentCard($id): AjaxResponse {
+    $db = $this->database->select('users_feedback', 'b')
+      ->fields('b', [])
+      ->condition('id', $id)
+      ->execute();
+    $result = $db->fetch();
+    $result->fid_picture = [
+        '#theme' => 'image_style',
+        '#style_name' => 'medium',
+        '#alt' => 'picture',
+        '#uri' => File::load($result->fid_picture)->getFileUri(),
+      ];
+    $result->fid_avatar = [
+        '#theme' => 'image_style',
+        '#style_name' => 'thumbnail',
+        '#alt' => 'avatar',
+        '#uri' => File::load($result->fid_avatar)->getFileUri(),
+      ];
+      $cards = [
+        '#theme' => 'about',
+        '#guest_name' => $result->guest_name,
+        '#guest_email' => $result->guest_email,
+        '#guest_number' => $result->guest_number,
+        '#feedback' => $result->feedback,
+        '#fid_avatar' => $result->fid_avatar,
+        '#fid_picture' => $result->fid_picture,
+        '#created_time' => $result->created_time,
+      ];
+      $dialog_options = [
+        'width' => '800',
+        'height' => '500',
+        'dialogClass' => 'm',
+        'modal' => 'true',
+      ];
+    $response = new AjaxResponse();
+    $response->addCommand(new OpenModalDialogCommand('about', $cards, $dialog_options));
+    return $response;
+  }
   /**
    * Returns data to the template.
    */

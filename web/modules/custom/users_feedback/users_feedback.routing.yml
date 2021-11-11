@@ -4,3 +4,21 @@ users_feedback.main_page:
     _controller: '\Drupal\users_feedback\Controller\HomePageController::form'
   requirements:
     _permission: 'access content'
+users_feedback.show:
+  path: '/users_feedback/{id}'
+  defaults:
+    _controller: '\Drupal\users_feedback\Controller\HomePageController::showCurrentCard'
+  requirements:
+    _permission: 'access content'
+users_feedback.delete:
+  path: '/users_feedback/{id}/delete'
+  defaults:
+    _form: '\Drupal\users_feedback\Form\Delete'
+  requirements:
+    _permission: 'administer nodes'
+users_feedback.update:
+  path: '/users_feedback/{id}/edit'
+  defaults:
+    _form: '\Drupal\users_feedback\Form\Edit'
+  requirements:
+    _permission: 'administer nodes'

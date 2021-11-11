@@ -4,9 +4,6 @@
  * Main file for custom hooks.
  */
 
-use Drupal\Core\Form\FormStateInterface;
-use Drupal\file\Entity\File;
-
 
 /**
  * Implements hook_theme().
@@ -19,61 +16,16 @@ function users_feedback_theme($existing, $type, $theme, $path): array {
         'cards' => [],
       ],
     ],
-  ];
-}
-function form_theme($existing, $type, $theme, $path): array {
-  return [
-    'custom_form' => [
-      'render element' => 'main_form',
-      'template' => 'custom_form',
+    'about' => [
+      'variables' => [
+        'guest_name' => NULL,
+        'guest_email' => NULL,
+        'guest_number' => NULL,
+        'feedback' => NULL,
+        'fid_avatar' => [],
+        'fid_picture' => [],
+        'created_time' => NULL,
+      ],
     ],
   ];
 }
-function users_feedback_form_alter(&$form, FormStateInterface $form_state, $form_id) {
-  if($form_id === 'BasicFeedbackForm') {
-//    $form['avatar_default'] = [
-//      '#theme' => 'image_style',
-//      '#style_name' => 'thumbnail',
-//      '#uri' => File::load(12)->getFileUri(),
-//    ];
-//    $form['avatar_default']['#weight'] = 3;
-//    if($form['fid_avatar']) {
-//      $form['fid_avatar'] = [
-//        '#theme' => 'image_style',
-//        '#style_name' => 'thumbnail',
-//        '#uri' => File::load(12)->getFileUri(),
-//      ];
-//    }
-//    return [
-//      'custom_form' => [
-//        'render element' => $form ,
-//        'template' => 'custom_form',
-//      ],
-//    ];
-  }
-}
-///**
-// * Implements hook_form_BASE_FORM_ID_alter().
-// */
-//function users_feedback_form_user_login_form_alter(&$form, FormStateInterface &$form_state) {
-//  $form['#theme'] = ['feedback_form'];
-//}
-
-/**
- * Implements hook_theme_suggestions_alter
- */
-function users_feedback_theme_suggestions_alter(array &$suggestions, array $variables)
-{
-
-  if (isset($variables['element']) && isset($variables['element']['#type']) && $variables['element']['#type'] == 'form') {
-    $original_theme_hook = $variables['theme_hook_original'];
-
-    $suggestions[] = $original_theme_hook . '__' . str_replace('-', '_', $variables['element']['#id']);
-  }
-
-  return $suggestions;
-
-}
-//function users_feedback_form_BasicFeedbackForm_alter(&$form, FormStateInterface &$form_state) {
-//$form['#theme'] = ['custom_form'];
-//}

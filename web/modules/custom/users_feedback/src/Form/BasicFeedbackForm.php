@@ -4,8 +4,10 @@ namespace Drupal\users_feedback\Form;
 
 use Drupal\Core\Ajax\AjaxResponse;
 use Drupal\Core\Ajax\MessageCommand;
+use Drupal\Core\Ajax\RedirectCommand;
 use Drupal\Core\Form\FormBase;
 use Drupal\Core\Form\FormStateInterface;
+use Drupal\Core\Url;
 use Drupal\file\Entity\File;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
@@ -63,6 +65,7 @@ class BasicFeedbackForm extends FormBase {
       '#type' => 'managed_file',
       '#title' => $this->t('Please, choose profile picture'),
       '#upload_location' => 'public://images/avatar/',
+      '#default_value' => [12],
       '#upload_validators' => [
         'file_validate_extension' => ['jpeg jpg png'],
         'file_validate_size' => ['2097152'],
@@ -139,7 +142,13 @@ class BasicFeedbackForm extends FormBase {
         'progress' => FALSE,
       ],
     ];
-    $form['fid_picture'] = [
+//    $form['picture_wraper'] = [
+//      '#type' => 'container',
+//      '#attributes' => [
+//        'class' => ['asdasd', 'asdasdsasdasd'],
+//      ],
+//    ];
+    $form['picture_wraper']['fid_picture'] = [
       '#type' => 'managed_file',
       '#title' => $this->t('Please, choose picture'),
       '#upload_location' => 'public://images/picture/',
@@ -169,7 +178,13 @@ class BasicFeedbackForm extends FormBase {
     ];
     return $form;
   }
-
+//  public function reloadAjax(): AjaxResponse {
+//    $response = new AjaxResponse();
+//    $url = Url::fromRoute('users_feedback.main_page');
+//    $command = new RedirectCommand($url->toString());
+//    $response->addCommand($command);
+//    return $response;
+//  }
   /**
    * Ajax callback for validate each form field.
    */
@@ -291,7 +306,10 @@ class BasicFeedbackForm extends FormBase {
       'fid_picture' => $this->saveFile($form_state, 'fid_picture'),
       'created_time' => $requestTime,
     ];
-    $this->database->insert('users_feedback')->fields($data)->execute();
+    if($form_state->hasAnyErrors()){
+      $this->database->insert('users_feedback')->fields($data)->execute();
+    }
+
   }
   /**
    * {@inheritdoc}
@@ -301,7 +319,7 @@ class BasicFeedbackForm extends FormBase {
    * запхнути на сабміті дефолтне значення картинки якщо філд не заповнений!
    */
   public function submitForm(&$form, FormStateInterface $form_state) {
-    $this->pushData($form, $form_state);
+      $this->pushData($form, $form_state);
   }
 
   // If (empty($form_state->getValue('fid_avatar'))) {

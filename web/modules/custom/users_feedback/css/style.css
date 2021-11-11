@@ -46,4 +46,28 @@
   height: 100px;
 }
 
+.card a:hover, .card a {
+  text-decoration: none;
+  border: unset;
+}
+
+.buttons {
+  display: flex;
+  justify-content: space-around;
+}
+
+.admin_button {
+  width: 30%;
+  height: 20px;
+  padding: 0.5em 1.063em;
+  cursor: pointer;
+  text-align: center;
+  color: #3a3a3a;
+  border-radius: 1em;
+  background-image: linear-gradient(to bottom, #f3f3f3, #e8e8e8);
+  font-family: "Lucida Grande", "Lucida Sans Unicode", Verdana, sans-serif;
+  font-size: 0.929em;
+  margin: 0 1em 20px 1em;
+}
+
 /*# sourceMappingURL=style.css.map */

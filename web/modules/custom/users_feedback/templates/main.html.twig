@@ -1,22 +1,30 @@
 {{ main_form }}
 <div class = 'all_cards'>
   {% for card in cards %}
-  <div class = 'card'>
-    <div class = "top">
-      <div class = 'first_group'>
-        <div class = 'avatar'>{{ card.fid_avatar }}</div>
-        <div>{{ card.guest_name }}</div>
-        <div>{{ card.created_time | date("d/m/Y G:i:s") }}</div>
+  <a class = 'use-ajax' data-dialog-type='modal' href='/users_feedback/{{ card.id }}'>
+    <div class = 'card'>
+      <div class = 'top'>
+        <div class = 'first_group'>
+          <div class = 'avatar'>{{ card.fid_avatar }}</div>
+          <div>{{ card.guest_name }}</div>
+          <div>{{ card.created_time | date("d/m/Y G:i:s") }}</div>
+        </div>
+        <div class = 'third_group'>
+          <div>{{ card.guest_email}}</div>
+          <div>{{ card.guest_number }}</div>
+        </div>
       </div>
-      <div class = 'third_group'>
-        <div>{{ card.guest_email}}</div>
-        <div>{{ card.guest_number }}</div>
+      <div class = 'second_group'>
+          {{ card.fid_picture }}
+          <div class = "feedback">{{ card.feedback }}</div>
       </div>
+      {% if 'administrator' in user.getroles %}
+      <div class = 'buttons'>
+        <a class = 'use-ajax admin_button' data-dialog-type='modal' href = '/users_feedback/{{ card.id }}/edit'><span>Edit</span></a>
+        <a class = 'use-ajax admin_button' data-dialog-type='modal' href = '/users_feedback/{{ card.id }}/delete'><span>Delete</span></a>
+      </div>
+      {% endif %}
     </div>
-    <div class = 'second_group'>
-        {{ card.fid_picture }}
-        <div class = "feedback">{{ card.feedback }}</div>
-    </div>
-  </div>
+  </a>
   {% endfor %}
 </div>
