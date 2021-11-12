@@ -36,7 +36,48 @@ class HomePageController extends ControllerBase {
     $build['form'] = \Drupal::formBuilder()->getForm($form_class);
     return $build;
   }
-
+  public function saveTemproryImg($element) {
+    $file = File::load($element);
+    $file->setPermanent();
+    $file->save();
+  }
+  function defAvatar($data) {
+   if(isset($data->fid_avatar)) {
+     $avatar = [
+       '#theme' => 'image_style',
+       '#style_name' => 'thumbnail',
+       '#alt' => 'avatar',
+       '#uri' => File::load($data->fid_avatar)->getFileUri(),
+     ];
+     $this->saveTemproryImg($data->fid_avatar);
+     return $avatar;
+   }
+   else {
+     $avatar_def = [
+       '#theme' => 'image_style',
+       '#style_name' => 'thumbnail',
+       '#alt' => 'avatar',
+       '#uri' => File::load(12)->getFileUri(),
+     ];
+     $this->saveTemproryImg(12);
+     return $avatar_def;
+   }
+  }
+  function defPicture($data) {
+    if(isset($data->fid_picture)) {
+      $picture = [
+        '#theme' => 'image_style',
+        '#style_name' => 'medium',
+        '#alt' => 'picture',
+        '#uri' => File::load($data->fid_picture)->getFileUri(),
+      ];
+      $this->saveTemproryImg($data->fid_picture);
+      return $picture;
+    }
+    else {
+      return NULL;
+    }
+  }
   public function viewCard() {
     $db = $this->database->select('users_feedback', 'a')
       ->fields('a', [])
@@ -45,26 +86,14 @@ class HomePageController extends ControllerBase {
     $result = $db->fetchAll();
     $cards = [];
     foreach ($result as $data) {
-      $picture = [
-        '#theme' => 'image_style',
-        '#style_name' => 'medium',
-        '#alt' => 'picture',
-        '#uri' => File::load($data->fid_picture)->getFileUri(),
-      ];
-      $avatar = [
-        '#theme' => 'image_style',
-        '#style_name' => 'thumbnail',
-        '#alt' => 'avatar',
-        '#uri' => File::load($data->fid_avatar)->getFileUri(),
-      ];
       $cards[] = [
         'id' => $data->id,
         'guest_name' => $data->guest_name,
         'guest_email' => $data->guest_email,
         'guest_number' => $data->guest_number,
         'feedback' => $data->feedback,
-        'fid_avatar' => $avatar,
-        'fid_picture' => $picture,
+        'fid_avatar' => $this->defAvatar($data),
+        'fid_picture' => $this->defPicture($data),
         'created_time' => $data->created_time,
       ];
     }

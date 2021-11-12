@@ -25,6 +25,23 @@ class Edit extends BasicFeedbackForm {
    */
   protected object $obj;
 
+
+  function defAvatar(FormStateInterface $form_state) {
+    if(isset($form_state->getValue('fid_avatar')[0])) {
+     return $form_state->getValue('fid_avatar')[0];
+    }
+    else {
+      return 12;
+    }
+  }
+  function defPicture(FormStateInterface $form_state) {
+    if(isset($form_state->getValue('fid_picture')[0])) {
+      return $form_state->getValue('fid_picture')[0];
+    }
+    else {
+      return NULL;
+    }
+  }
   /**
    * {@inheritDoc}
    */
@@ -36,10 +53,8 @@ class Edit extends BasicFeedbackForm {
     $card = $result->fetch();
     $this->obj = $card;
     $form = parent::buildForm($form, $form_state);
-    $form['fid_avatar']['#default_value'] = [$card->fid_avatar];
     $form['guest_name']['#default_value'] = $card->guest_name;
     $form['created_time']['#default_value'] = $card->created_time;
-    $form['fid_picture']['#default_value'] = [$card->fid_picture];
     $form['feedback']['#default_value'] = $card->feedback;
     $form['guest_email']['#default_value'] = $card->guest_email;
     $form['guest_number']['#default_value'] = $card->guest_number;
@@ -54,17 +69,17 @@ class Edit extends BasicFeedbackForm {
    */
   public function submitForm(&$form, FormStateInterface $form_state) {
     $updated = [
-      'fid_avatar' => $form_state->getValue('fid_avatar')[0],
+      'fid_avatar' => $this->defAvatar($form_state),
       'guest_name' => $form_state->getValue('guest_name'),
       'guest_email' => $form_state->getValue('guest_email'),
       'guest_number' => $form_state->getValue('guest_number'),
-      'fid_picture' => $form_state->getValue('fid_picture')[0],
+      'fid_picture' => $this->defPicture($form_state),
       'feedback' => $form_state->getValue('feedback'),
     ];
-    $file = File::load($form_state->getValue('fid_avatar')[0]);
+    $file = File::load($this->defAvatar($form_state));
     $file->setPermanent();
     $file->save();
-    $ava = File::load($form_state->getValue('fid_picture')[0]);
+    $ava = File::load($this->defPicture($form_state));
     $ava->setPermanent();
     $ava->save();
     $this->database

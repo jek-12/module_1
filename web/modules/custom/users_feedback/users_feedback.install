@@ -45,14 +45,10 @@ function users_feedback_schema() {
       'fid_avatar' => [
         'type' => 'int',
         'length' => 255,
-        'not null' => TRUE,
-        'default' => 0,
       ],
       'fid_picture' => [
         'type' => 'int',
         'length' => 255,
-        'not null' => TRUE,
-        'default' => 0,
       ],
       'created_time' => [
         'type' => 'int',
